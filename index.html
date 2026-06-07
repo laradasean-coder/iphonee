@@ -1,526 +1,1468 @@
+cat << 'EOF' > index.html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم محاكاة AppsFlyer الذكية (Android & iOS)</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/text/rtl/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 10px; margin-bottom: 20px; }
-        .card-header { background-color: #fff; border-bottom: 1px solid #efefef; font-weight: bold; border-top-left-radius: 10px; border-top-right-radius: 10px; }
-        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
-        .status-connected { background-color: #d1e7dd; color: #0f5132; }
-        .status-disconnected { background-color: #f8d7da; color: #842029; }
-        .log-container { background-color: #212529; color: #f8f9fa; font-family: monospace; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #343a40; padding-bottom: 3px; font-size: 0.9rem; }
-        .toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 1055; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pharaoh Pro">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>PHARAOH PRO v17.0</title>
+<style>
+:root {
+  --bg: #0a0a14;
+  --surface: #11111e;
+  --card: #191928;
+  --border: #252540;
+  --accent: #e8b86d;
+  --accent2: #7c6af5;
+  --accent3: #5de8a0;
+  --red: #e85d5d;
+  --green: #5de8a0;
+  --blue: #5db8e8;
+  --text: #e8e8f0;
+  --muted: #6666aa;
+  --radius: 12px;
+  --py: #3572A5;
+  --py2: #FFD43B;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ═══ HEADER ═══ */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+  position: sticky; top: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header-title { font-size: 14px; font-weight: bold; color: var(--accent); letter-spacing: 2px; }
+.header-right { display: flex; gap: 8px; align-items: center; }
+.header-badge {
+  background: var(--accent2); color: white;
+  font-size: 9px; padding: 3px 7px; border-radius: 20px; letter-spacing: 1px;
+}
+.py-badge {
+  background: var(--py); color: var(--py2);
+  font-size: 9px; padding: 3px 7px; border-radius: 20px; letter-spacing: 1px;
+  font-weight: bold;
+}
+
+/* ═══ NAV BAR (bottom) ═══ */
+.nav-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 200;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 10px 4px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  transition: color 0.2s;
+  gap: 4px;
+  border-top: 2px solid transparent;
+}
+.nav-item.active { color: var(--accent); border-top-color: var(--accent); }
+.nav-item svg { width: 20px; height: 20px; }
+
+/* ═══ PAGES ═══ */
+.page { display: none; padding-bottom: 70px; }
+.page.active { display: block; }
+
+/* ═══ IDS BAR ═══ */
+.ids-bar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 8px 12px; display: flex; gap: 6px; align-items: center;
+}
+.id-chip {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 5px 8px;
+  font-size: 9px; color: var(--muted);
+  cursor: pointer; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transition: border-color 0.2s;
+}
+.id-chip:active { border-color: var(--accent); }
+.id-label { color: var(--accent); font-size: 8px; display: block; margin-bottom: 1px; }
+
+/* ═══ FILTER TABS ═══ */
+.tabs {
+  display: flex; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 6px; overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex-shrink: 0; text-align: center;
+  padding: 10px 10px; font-size: 10px;
+  color: var(--muted); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s; white-space: nowrap;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ═══ SEARCH ═══ */
+.search-bar {
+  padding: 10px 12px; background: var(--bg);
+  position: sticky; top: 49px; z-index: 100;
+}
+.search-input {
+  width: 100%; background: var(--card);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 9px 12px; color: var(--text);
+  font-size: 12px; font-family: inherit; outline: none;
+  transition: border-color 0.2s; direction: rtl;
+}
+.search-input:focus { border-color: var(--accent2); }
+.search-input::placeholder { color: var(--muted); }
+
+/* ═══ GAMES GRID ═══ */
+.games-grid {
+  padding: 0 10px 10px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.game-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 10px;
+  cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden;
+}
+.game-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent2); opacity: 0; transition: opacity 0.2s;
+}
+.game-card:active { transform: scale(0.97); border-color: var(--accent2); }
+.game-card:active::before { opacity: 1; }
+.game-num { font-size: 8px; color: var(--accent); margin-bottom: 3px; letter-spacing: 1px; }
+.game-name { font-size: 11px; color: var(--text); font-weight: bold; line-height: 1.3; margin-bottom: 4px; }
+.game-pkg { font-size: 8px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.no-results { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 12px; display: none; }
+
+/* ═══ GAME DETAIL ═══ */
+.view { display: none; }
+.view.active { display: block; }
+.back-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 12px 14px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; color: var(--accent); font-size: 12px;
+}
+.detail-header { padding: 16px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
+.detail-game-name { font-size: 16px; font-weight: bold; color: var(--accent); margin-bottom: 4px; }
+.detail-pkg { font-size: 10px; color: var(--muted); }
+.detail-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.field-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; letter-spacing: 1px; }
+.template-display {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px;
+  font-size: 12px; color: var(--accent2);
+  font-family: inherit;
+}
+.level-input {
+  width: 100%; background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; color: var(--text);
+  font-size: 13px; font-family: inherit; outline: none;
+  transition: border-color 0.2s; text-align: center;
+}
+.level-input:focus { border-color: var(--accent); }
+.preview-text { font-size: 11px; color: var(--accent3); min-height: 18px; text-align: center; }
+.btn-row { display: flex; gap: 8px; }
+.btn {
+  flex: 1; padding: 13px; border: none; border-radius: 10px;
+  font-family: inherit; font-size: 12px; font-weight: bold;
+  cursor: pointer; letter-spacing: 1px; transition: all 0.15s;
+}
+.btn-primary { background: var(--accent2); color: white; }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--muted); }
+.btn:active { transform: scale(0.96); }
+.log-section-title { font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; }
+.log-list { display: flex; flex-direction: column; gap: 6px; }
+.log-entry {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.log-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.log-dot.success { background: var(--green); }
+.log-dot.error { background: var(--red); }
+.log-time { font-size: 9px; color: var(--muted); flex-shrink: 0; }
+.log-text { font-size: 10px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log-status { font-size: 9px; color: var(--muted); flex-shrink: 0; }
+.log-empty { text-align: center; padding: 20px; color: var(--muted); font-size: 11px; }
+
+/* ═══ PYTHON TERMINAL ═══ */
+.py-page { padding: 0; padding-bottom: 70px; }
+.py-toolbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 10px 12px; display: flex; gap: 8px; align-items: center;
+  flex-wrap: wrap;
+}
+.py-status {
+  font-size: 10px; padding: 4px 10px;
+  border-radius: 20px; letter-spacing: 1px; font-weight: bold;
+}
+.py-status.loading { background: #3a3020; color: var(--py2); }
+.py-status.ready { background: #1a3020; color: var(--green); }
+.py-status.error { background: #3a1020; color: var(--red); }
+.py-btn {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px;
+  color: var(--text); font-size: 10px; font-family: inherit;
+  cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px;
+}
+.py-btn.primary { background: var(--accent2); border-color: var(--accent2); color: white; }
+.py-btn.green { background: #1a4a2a; border-color: var(--green); color: var(--green); }
+.py-btn:active { transform: scale(0.95); }
+.py-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* server bar */
+.server-bar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 8px 12px; display: flex; gap: 8px; align-items: center;
+}
+.server-input {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 10px; color: var(--text);
+  font-size: 10px; font-family: inherit; outline: none; direction: ltr;
+  transition: border-color 0.2s;
+}
+.server-input:focus { border-color: var(--accent); }
+.server-input::placeholder { color: var(--muted); }
+.server-connect-btn {
+  background: var(--accent); border: none; border-radius: 8px;
+  padding: 7px 12px; color: #000; font-size: 10px;
+  font-family: inherit; font-weight: bold; cursor: pointer;
+  white-space: nowrap; transition: all 0.15s;
+}
+.server-connect-btn:active { transform: scale(0.95); }
+.server-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--muted); flex-shrink: 0; transition: background 0.3s;
+}
+.server-dot.ok { background: var(--green); }
+.server-dot.err { background: var(--red); }
+
+/* pip installer */
+.pip-bar {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 8px 12px; display: flex; gap: 8px; align-items: center;
+}
+.pip-input {
+  flex: 1; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 10px;
+  color: var(--text); font-size: 11px; font-family: inherit; outline: none;
+  transition: border-color 0.2s;
+}
+.pip-input:focus { border-color: var(--py2); }
+.pip-input::placeholder { color: var(--muted); }
+.pip-btn {
+  background: var(--py); border: none; border-radius: 8px;
+  padding: 7px 14px; color: var(--py2);
+  font-size: 11px; font-family: inherit; font-weight: bold;
+  cursor: pointer; letter-spacing: 1px; transition: all 0.15s;
+  white-space: nowrap;
+}
+.pip-btn:active { transform: scale(0.95); }
+.pip-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* installed packages */
+.pkg-chips {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 6px 12px; display: flex; gap: 6px; flex-wrap: wrap; min-height: 36px;
+}
+.pkg-chip {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 3px 8px;
+  font-size: 9px; color: var(--accent3);
+  display: flex; align-items: center; gap: 4px;
+}
+.pkg-chip-remove {
+  color: var(--muted); cursor: pointer; font-size: 11px; line-height: 1;
+}
+.pkg-empty { font-size: 9px; color: var(--muted); padding: 6px 0; }
+
+/* code editor */
+.editor-container {
+  position: relative;
+  background: var(--card);
+}
+.code-editor {
+  width: 100%; min-height: 200px;
+  background: #0d0d18; border: none;
+  border-bottom: 1px solid var(--border);
+  color: #e8e8f0; font-size: 12px;
+  font-family: 'Courier New', monospace;
+  padding: 12px; outline: none; resize: vertical;
+  direction: ltr; text-align: left; line-height: 1.5;
+  tab-size: 2;
+}
+.code-editor::placeholder { color: var(--muted); }
+.line-nums {
+  position: absolute; top: 0; right: 0;
+  padding: 12px 6px; font-size: 12px;
+  color: var(--muted); line-height: 1.5;
+  pointer-events: none; user-select: none;
+  font-family: 'Courier New', monospace;
+  text-align: right; min-width: 30px;
+  opacity: 0.4;
+}
+
+/* output */
+.output-area {
+  background: #050510; min-height: 160px;
+  padding: 10px 12px;
+  font-size: 11px; font-family: 'Courier New', monospace;
+  line-height: 1.6; direction: ltr; text-align: left;
+  overflow-y: auto; max-height: 300px;
+  white-space: pre-wrap; word-break: break-all;
+}
+.out-line-stdout { color: #c8f0c8; }
+.out-line-stderr { color: #f0a0a0; }
+.out-line-info { color: #a0c0f0; }
+.out-line-success { color: var(--green); }
+.out-line-error { color: var(--red); }
+.out-line-sys { color: var(--muted); font-style: italic; }
+
+/* ═══ SNIPPETS PAGE ═══ */
+.snippet-list { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.snippet-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; cursor: pointer;
+  transition: border-color 0.2s;
+}
+.snippet-card:active { border-color: var(--accent2); }
+.snippet-header {
+  padding: 10px 12px; display: flex; align-items: center; justify-content: space-between;
+}
+.snippet-title { font-size: 12px; color: var(--accent); font-weight: bold; }
+.snippet-tag {
+  font-size: 8px; padding: 2px 7px; border-radius: 20px;
+  background: var(--surface); color: var(--muted); letter-spacing: 0.5px;
+}
+.snippet-desc { padding: 0 12px 10px; font-size: 10px; color: var(--muted); line-height: 1.4; }
+.snippet-preview {
+  background: #050510; padding: 8px 12px;
+  font-size: 10px; color: var(--muted);
+  font-family: 'Courier New', monospace;
+  direction: ltr; text-align: left; line-height: 1.4;
+  overflow: hidden; max-height: 60px;
+  border-top: 1px solid var(--border);
+}
+
+/* ═══ SETTINGS PAGE ═══ */
+.settings-list { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.settings-section { font-size: 9px; color: var(--muted); letter-spacing: 2px; padding: 8px 0 4px; }
+.settings-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.settings-label { font-size: 12px; color: var(--text); }
+.settings-sublabel { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.toggle {
+  width: 42px; height: 24px; border-radius: 12px;
+  background: var(--border); position: relative; cursor: pointer;
+  transition: background 0.3s; flex-shrink: 0; border: none;
+}
+.toggle.on { background: var(--accent2); }
+.toggle::after {
+  content: ''; position: absolute; width: 18px; height: 18px;
+  border-radius: 50%; background: white; top: 3px; left: 3px;
+  transition: left 0.3s;
+}
+.toggle.on::after { left: 21px; }
+.settings-input {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 10px;
+  color: var(--text); font-size: 11px; font-family: inherit;
+  outline: none; width: 140px; text-align: center;
+}
+
+/* ═══ MODAL ═══ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; width: calc(100% - 40px);
+  max-width: 380px; display: flex; flex-direction: column; gap: 12px;
+}
+.modal-title { font-size: 14px; color: var(--accent); font-weight: bold; letter-spacing: 1px; }
+.modal-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px;
+  color: var(--text); font-size: 11px; font-family: inherit; outline: none;
+  direction: ltr; text-align: left;
+}
+.modal-input:focus { border-color: var(--accent); }
+.modal-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+
+/* ═══ TOAST ═══ */
+.toast {
+  position: fixed; bottom: 80px; left: 12px; right: 12px; z-index: 300;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px;
+  transform: translateY(20px); opacity: 0;
+  transition: all 0.25s; pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: var(--green); }
+.toast.error { border-color: var(--red); }
+.toast.loading { border-color: var(--accent2); }
+.toast-icon { font-size: 18px; flex-shrink: 0; }
+.toast-body { flex: 1; min-width: 0; }
+.toast-title { font-size: 12px; font-weight: bold; color: var(--text); }
+.toast-detail { font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spinner {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--border); border-top-color: var(--accent2);
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══ PAGE TITLE BAR ═══ */
+.page-titlebar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 10px 14px; font-size: 11px; color: var(--muted); letter-spacing: 2px;
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
 </head>
 <body>
 
-<div class="container-fluid py-4">
-    <div class="row align-items-center mb-4">
-        <div class="col-md-6">
-            <h2 class="text-primary mb-0"><i class="fa-solid fa-gamepad me-2"></i> لوحة محاكاة أحداث AppsFlyer الذكية</h2>
-            <p class="text-muted small mb-0">نظام متكامل يدعم الأندرويد والآيفون تلقائياً عبر سيرفر Proxy</p>
-        </div>
-        <div class="col-md-6 text-md-end mt-3 mt-md-0">
-            <span id="connectionStatus" class="status-badge status-disconnected">
-                <i class="fa-solid fa-circle-xmark me-1"></i> السيرفر غير متصل
-            </span>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-lg-5">
-            <div class="card">
-                <div class="card-header text-dark"><i class="fa-solid fa-server me-2 text-secondary"></i> إعدادات سيرفر Railway Proxy</div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label font-weight-bold">رابط السيرفر الأساسي (URL)</label>
-                        <div class="input-group">
-                            <input type="text" id="serverUrlInput" class="form-control text-start" dir="ltr" placeholder="https://your-project.id.railway.app">
-                            <button class="btn btn-primary" onclick="connectServer()"><i class="fa-solid fa-plug me-1"></i> ربط</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header text-dark"><i class="fa-solid fa-id-card me-2 text-info"></i> بيانات الجهاز والمعرفات المستهدفة</div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">معرف الإعلانات (GAID / IDFA)</label>
-                        <input type="text" id="gaidInput" class="form-control text-center" dir="ltr" placeholder="أدخل GAID للأندرويد أو IDFA للآيفون" oninput="detectDeviceType()">
-                        <div id="deviceDetectorBadge" class="form-text text-muted mt-1 text-end">سيتم تحديد نوع الجهاز تلقائياً من نمط المعرف.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">معرف أبسفلاير (AppsFlyer ID)</label>
-                        <input type="text" id="afidInput" class="form-control text-center" dir="ltr" placeholder="مثال: 1780061647364-1079584">
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header text-dark"><i class="fa-solid fa-play me-2 text-success"></i> التحكم واختيار الألعاب</div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">اختر اللعبة المستهدفة</label>
-                        <select id="gameSelect" class="form-select" onchange="onGameChange()">
-                            <option value="">-- اختر لعبة من القائمة --</option>
-                        </select>
-                    </div>
-                    
-                    <div id="manualActions" class="d-none">
-                        <hr>
-                        <h6 class="mb-3 text-secondary">إرسال أحداث فورية (يدوية):</h6>
-                        <div class="d-grid gap-2 mb-3">
-                            <button class="btn btn-outline-success" onclick="sendEvent('open', 'af_first_open')">
-                                <i class="fa-solid fa-rocket me-1"></i> إرسال حدث الافتتاح الأول (af_first_open)
-                            </button>
-                        </div>
-                        <div class="input-group mb-3">
-                            <span class="input-group-text">المنطقة / اللفل</span>
-                            <input type="number" id="levelInput" class="form-control text-center" value="1" min="1">
-                            <button class="btn btn-success" onclick="sendCustomLevelEvent()">
-                                <i class="fa-solid fa-paper-plane me-1"></i> إرسال اللفل الحالي
-                            </button>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-danger" onclick="sendEvent('purchase', 'af_purchase')">
-                                <i class="fa-solid fa-cart-shopping me-1"></i> إرسال حدث شراء مخصص ($4.99)
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-7">
-            <div class="card">
-                <div class="card-header text-dark"><i class="fa-solid fa-clock-rotate-left me-2 text-warning"></i> نظام المحاكاة التلقائي (العداد المتسلسل)</div>
-                <div class="card-body">
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">عدد اللفلات المطلوب إرسالها</label>
-                            <input type="number" id="simCount" class="form-control text-center" value="10" min="1">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">الفاصل الزمني بين كل لفل (بالثواني)</label>
-                            <input type="number" id="simDelay" class="form-control text-center" value="2" min="1">
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button id="startSimBtn" class="btn btn-warning flex-grow-1 font-weight-bold" onclick="startAutoSimulation()" disabled>
-                            <i class="fa-solid fa-play me-1"></i> بدء العداد التلقائي
-                        </button>
-                        <button id="stopSimBtn" class="btn btn-danger d-none" onclick="stopAutoSimulation()">
-                            <i class="fa-solid fa-stop me-1"></i> إيقاف مؤقت
-                        </button>
-                    </div>
-
-                    <div id="simProgressContainer" class="mt-3 d-none">
-                        <div class="table-responsive" style="max-height: 150px; overflow-y: auto;">
-                            <table class="table table-sm table-bordered text-center small mb-0">
-                                <thead class="table-light sticky-top">
-                                    <tr>
-                                        <th>الخطوة</th>
-                                        <th>اسم الحدث المنتج</th>
-                                        <th>حالة الإرسال للسيرفر</th>
-                                    </tr>
-                                </thead>
-                                id="simLogTable"
-                                <tbody id="simLogTable"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header text-dark d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-terminal me-2 text-dark"></i> شاشة مراقبة الحزم الصادرة والردود</span>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">مسح الشاشة</button>
-                </div>
-                <div class="card-body">
-                    <div id="logContainer" class="log-container">
-                        <div class="text-muted small">[نظام]: بانتظار ربط السيرفر وتعبئة المعرفات لبدء المراقبة...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="header">
+  <div class="header-title">⚡ PHARAOH PRO</div>
+  <div class="header-right">
+    <span class="py-badge" id="py-badge">🐍 Loading...</span>
+    <span class="header-badge">v17.0</span>
+  </div>
 </div>
 
-<div id="toastContainer" class="toast-container"></div>
+<div class="page active" id="page-games">
+
+  <div class="ids-bar">
+    <div class="id-chip" onclick="openIdModal()">
+      <span class="id-label">GAID</span>
+      <span id="display-gaid">...</span>
+    </div>
+    <div class="id-chip" onclick="openIdModal()">
+      <span class="id-label">AF ID</span>
+      <span id="display-afid">...</span>
+    </div>
+  </div>
+
+  <div id="view-main" class="view active">
+    <div class="tabs">
+      <div class="tab active" onclick="filterGames('all',this)">الكل</div>
+      <div class="tab" onclick="filterGames('puzzle',this)">Puzzle</div>
+      <div class="tab" onclick="filterGames('farm',this)">Farm</div>
+      <div class="tab" onclick="filterGames('merge',this)">Merge</div>
+      <div class="tab" onclick="filterGames('other',this)">Other</div>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" placeholder="ابحث باسم اللعبة أو Package..." oninput="searchGames(this.value)" dir="rtl">
+    </div>
+    <div class="games-grid" id="games-grid"></div>
+    <div class="no-results" id="no-results">لا توجد نتائج</div>
+  </div>
+
+  <div id="view-detail" class="view">
+    <div class="back-btn" onclick="goBack()">← رجوع</div>
+    <div class="detail-header">
+      <div class="detail-game-name" id="detail-game-name"></div>
+      <div class="detail-pkg" id="detail-pkg"></div>
+    </div>
+    <div class="detail-body">
+      <div>
+        <div class="field-label">EVENT TEMPLATE</div>
+        <div class="template-display" id="event-template-display"></div>
+      </div>
+      <div id="level-input-wrap">
+        <div class="field-label">LEVEL NUMBER</div>
+        <input class="level-input" id="level-input" type="number" min="1" placeholder="أدخل رقم المستوى..." oninput="updateEventPreview()">
+        <div class="preview-text" id="event-preview"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="sendLevelEvent()">📤 إرسال حدث</button>
+        <button class="btn btn-secondary" onclick="sendPurchase()">💰 شراء</button>
+      </div>
+      <div>
+        <div class="log-section-title">EVENT LOG</div>
+        <div class="log-list" id="event-log"><div class="log-empty">لا توجد أحداث بعد</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page py-page" id="page-python">
+  <div class="page-titlebar">🐍 PYTHON TERMINAL — Pyodide</div>
+
+  <div class="py-toolbar">
+    <span class="py-status loading" id="py-status">جاري تحميل Python...</span>
+    <button class="py-btn primary" id="btn-run" onclick="runPython()" disabled>▶ تشغيل</button>
+    <button class="py-btn" onclick="clearEditor()">مسح الكود</button>
+    <button class="py-btn" onclick="clearOutput()">مسح النتائج</button>
+  </div>
+
+  <div class="server-bar">
+    <span style="font-size:10px;color:var(--accent);white-space:nowrap">🌐</span>
+    <input class="server-input" id="server-url" placeholder="https://your-app.railway.app  (مطلوب لتخطي CORS)">
+    <button class="server-connect-btn" onclick="connectServer()">اتصال</button>
+    <div class="server-dot" id="server-dot" title="حالة الخادم"></div>
+  </div>
+
+  <div class="pip-bar">
+    <span style="font-size:10px;color:var(--py2);white-space:nowrap">pip install</span>
+    <input class="pip-input" id="pip-input" placeholder="اسم المكتبة (مثال: numpy, pandas, requests...)" dir="ltr">
+    <button class="pip-btn" id="btn-pip" onclick="installPackage()" disabled>تثبيت</button>
+  </div>
+
+  <div class="pkg-chips" id="pkg-chips">
+    <span class="pkg-empty" id="pkg-empty">لا توجد مكتبات مثبتة بعد</span>
+  </div>
+
+  <div class="editor-container">
+    <textarea class="code-editor" id="code-editor" placeholder="# اكتب كود Python هنا...
+print('مرحباً من Pharaoh Pro!')
+" spellcheck="false" oninput="updateLineNums()" onkeydown="handleTab(event)"></textarea>
+  </div>
+
+  <div class="py-toolbar" style="padding:8px 12px;">
+    <span style="font-size:10px;color:var(--muted)">OUTPUT</span>
+    <button class="py-btn green" onclick="runPython()" id="btn-run2" disabled>▶ تشغيل الكود</button>
+  </div>
+
+  <div class="output-area" id="output-area"><span class="out-line-sys">// في انتظار تشغيل الكود...</span></div>
+</div>
+
+<div class="page" id="page-snippets">
+  <div class="page-titlebar">📦 SNIPPETS — أمثلة جاهزة</div>
+  <div class="snippet-list" id="snippet-list"></div>
+</div>
+
+<div class="page" id="page-settings">
+  <div class="page-titlebar">⚙️ SETTINGS</div>
+  <div class="settings-list">
+    <div class="settings-section">SERVER</div>
+    <div class="settings-item">
+      <div>
+        <div class="settings-label">رابط Railway</div>
+        <div class="settings-sublabel">خادم الباك أند والوسيط للـ CORS</div>
+      </div>
+      <input class="settings-input" id="settings-server" dir="ltr" placeholder="https://..." oninput="document.getElementById('server-url').value=this.value">
+    </div>
+
+    <div class="settings-section">DEVICE IDs</div>
+    <div class="settings-item">
+      <div>
+        <div class="settings-label">GAID</div>
+        <div class="settings-sublabel">Google Advertising ID</div>
+      </div>
+      <input class="settings-input" id="settings-gaid" dir="ltr" oninput="autoSaveId('gaid')">
+    </div>
+    <div class="settings-item">
+      <div>
+        <div class="settings-label">AppsFlyer ID</div>
+        <div class="settings-sublabel">AppsFlyer Identifier</div>
+      </div>
+      <input class="settings-input" id="settings-afid" dir="ltr" oninput="autoSaveId('afid')">
+    </div>
+
+    <div class="settings-section">PYTHON</div>
+    <div class="settings-item">
+      <div>
+        <div class="settings-label">تحميل Python تلقائياً</div>
+        <div class="settings-sublabel">عند فتح التطبيق</div>
+      </div>
+      <button class="toggle on" id="toggle-autoload" onclick="toggleSetting('autoload',this)"></button>
+    </div>
+
+    <div class="settings-section">INFO</div>
+    <div class="settings-item">
+      <div class="settings-label">الإصدار</div>
+      <div style="font-size:11px;color:var(--muted)">v17.0 — Pharaoh Pro</div>
+    </div>
+    <div class="settings-item">
+      <div class="settings-label">محرك Python</div>
+      <div style="font-size:11px;color:var(--muted)">Pyodide 0.26 (WASM)</div>
+    </div>
+    <div class="settings-item" style="cursor:pointer" onclick="clearAllData()">
+      <div>
+        <div class="settings-label" style="color:var(--red)">مسح جميع البيانات</div>
+        <div class="settings-sublabel">إعادة ضبط التطبيق</div>
+      </div>
+      <span style="color:var(--red)">🗑</span>
+    </div>
+  </div>
+</div>
+
+<nav class="nav-bar">
+  <div class="nav-item active" id="nav-games" onclick="switchPage('games')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>
+    </svg>
+    ألعاب
+  </div>
+  <div class="nav-item" id="nav-python" onclick="switchPage('python')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+    </svg>
+    Python
+  </div>
+  <div class="nav-item" id="nav-snippets" onclick="switchPage('snippets')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+    </svg>
+    Snippets
+  </div>
+  <div class="nav-item" id="nav-settings" onclick="switchPage('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    إعدادات
+  </div>
+</nav>
+
+<div class="modal-overlay" id="id-modal">
+  <div class="modal">
+    <div class="modal-title">✏️ تعديل Device IDs</div>
+    <div>
+      <div class="modal-label">GAID (Google Advertising ID)</div>
+      <input class="modal-input" id="modal-gaid-input" dir="ltr" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+    </div>
+    <div>
+      <div class="modal-label">AppsFlyer ID</div>
+      <input class="modal-input" id="modal-afid-input" dir="ltr" placeholder="xxxxxxxxxx-xxxxxxxxxxxxxxxxxx">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveIds()">💾 حفظ</button>
+      <button class="btn btn-secondary" onclick="closeIdModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toast-icon"></div>
+  <div class="toast-body">
+    <div class="toast-title" id="toast-title"></div>
+    <div class="toast-detail" id="toast-detail"></div>
+  </div>
+</div>
 
 <script>
-// ==================== [ البيانات الأساسية والألعاب المدمجة ] ====================
-// تم دمج مفاتيح الآيفون المستخرجة لضمان توافق النظامين معاً بمرونة
+/* ─── GAMES DATA ─── */
 const GAMES_DATA = [
-    { name: "Domino Dreams", package: "id6444043291", dev_key: "Hn5qYjVAaRNJYDcwF4LaWF", dev_key_ios: "Hn5qYjVAaRNJYDcwF4LaWF", template: "af_area_{}_completed", cat: "puzzle" },
-    { name: "Disney Solitaire", package: "id6475757306", dev_key: "Hn5qYjVAaRNJYDcwF4LaWF", dev_key_ios: "Hn5qYjVAaRNJYDcwF4LaWF", template: "af_area_{}_completed", cat: "cards" },
-    { name: "Coin Master", package: "id406889139", dev_key: "H3KjoCRVTiVgA5mWSAHtCe", dev_key_ios: "H3KjoCRVTiVgA5mWSAHtCe", template: "village_{}_complete", cat: "casual" },
-    { name: "Board Adventure", package: "id6745761596", dev_key: "H3KjoCRVTiVgA5mWSAHtCe", dev_key_ios: "H3KjoCRVTiVgA5mWSAHtCe", template: "village_{}_complete", cat: "casual" },
-    { name: "Dice Dreams", package: "id1484468651", dev_key: "Hn5qYjVAaRNJYDcwF4LaWF", dev_key_ios: "Hn5qYjVAaRNJYDcwF4LaWF", template: "af_kingdom_{}_restored", cat: "casual" },
-    { name: "Toon Blast", package: "id1176027022", dev_key: "F9M4SkdtH8WHcAt86ESrF3", dev_key_ios: "F9M4SkdtH8WHcAt86ESrF3", template: "level_{}_completed", cat: "puzzle" },
-    { name: "Match Factory", package: "id6444094229", dev_key: "F9M4SkdtH8WHcAt86ESrF3", dev_key_ios: "F9M4SkdtH8WHcAt86ESrF3", template: "level_{}_completed", cat: "puzzle" },
-    { name: "Gardenscapes", package: "id1105855019", dev_key: "ixMH7WQi4SqLAmPWuyAtkH", dev_key_ios: "ixMH7WQi4SqLAmPWuyAtkH", template: "AchievedLevel{}", cat: "casual" },
-    { name: "Homescapes", package: "id1195621598", dev_key: "ixMH7WQi4SqLAmPWuyAtkH", dev_key_ios: "ixMH7WQi4SqLAmPWuyAtkH", template: "AchievedLevel{}", cat: "casual" },
-    { name: "Fishdom", package: "id664575829", dev_key: "ixMH7WQi4SqLAmPWuyAtkH", dev_key_ios: "ixMH7WQi4SqLAmPWuyAtkH", template: "acheivedlevel{}", cat: "casual" },
-    { name: "Township", package: "id63868907", dev_key: "nr8SibwpFjcKGBQNpDdttd", dev_key_ios: "nr8SibwpFjcKGBQNpDdttd", template: "achievedlevel{}", cat: "casual" },
-    { name: "Travel Town", package: "id1521236603", dev_key: "wizhvjciCuaDbAaR8KpZLn", dev_key_ios: "wizhvjciCuaDbAaR8KpZLn", template: "reachedLevel{}", cat: "casual" },
-    { name: "Merge Studio", package: "id1615964753", dev_key: "mFaiXvTWy8votzp3UpsSfS", dev_key_ios: "mFaiXvTWy8votzp3UpsSfS", template: "level_completed_{}", cat: "puzzle" },
-    { name: "Taylor's Secret", package: "id1659615328", dev_key: "qbKVyawAiwNX3b4D3Frijm", dev_key_ios: "qbKVyawAiwNX3b4D3Frijm", template: "level_{}", cat: "puzzle" },
-    { name: "Yarn Loop!", package: "id6755183085", dev_key: "TGm97uKTJF7qFCvREggWtf", dev_key_ios: "TGm97uKTJF7qFCvREggWtf", template: "level_complete_{}", cat: "puzzle" },
-    { name: "Klondike", package: "id1127240206", dev_key: "oTiS8cJmQRTDXbixob6wQL", dev_key_ios: "oTiS8cJmQRTDXbixob6wQL", template: "level {}", cat: "simulation" },
-    { name: "screw guru", package: "id6737529244", dev_key: "nYwfftoacbopmuszWBPGnd", dev_key_ios: "nYwfftoacbopmuszWBPGnd", template: "af_level_achieved{}", cat: "puzzle" },
-    { name: "Solitaire Smash", package: "id6446482475", dev_key: "PuaMuZXWm4zYzfDQNwW9Nf", dev_key_ios: "PuaMuZXWm4zYzfDQNwW9Nf", template: "deposit_0_and_win_{}", cat: "cards" },
-    { name: "Solitaire Cash", package: "id1446254576", dev_key: "HwQpkdp5VP6pSvK3Cd486g", dev_key_ios: "HwQpkdp5VP6pSvK3Cd486g", template: "ReachedLevel{}", cat: "cards" },
-    { name: "haunted merge", package: "id6752369665", dev_key: "6mUaoEXrUfgJUnRCue6ZeM", dev_key_ios: "6mUaoEXrUfgJUnRCue6ZeM", template: "hr_level_{}", cat: "puzzle" },
-    { name: "Merge Gardens", package: "id1464675244", dev_key: "nr8SibwpFjcKGBQNpDdttd", dev_key_ios: "nr8SibwpFjcKGBQNpDdttd", template: "Incent_Player_Level_Up_{}", cat: "casual" }
+  {name:"Color Sort Woody Puzzle",package:"games.burny.color.sort.woody.puzzle",dev_key:"CkyYk6ThNSr9MPEvmCNZRN",level_events:[{display:"Level completed",template:"level_completed"}],cat:"puzzle"},
+  {name:"Wooden Word Puzzle",package:"games.burny.wooden.word.puzzle",dev_key:"CkyYk6ThNSr9MPEvmCNZRN",level_events:[{display:"Level completed",template:"level_completed_{}"}],cat:"puzzle"},
+  {name:"Associations Word Puzzle",package:"games.burny.associations.word.puzzle",dev_key:"CkyYk6ThNSr9MPEvmCNZRN",level_events:[{display:"Level completed",template:"level_completed_{}"}],cat:"puzzle"},
+  {name:"Coin Master",package:"com.moonactive.coinmaster",dev_key:"H3KjoCRVTiVgA5mWSAHtCe",level_events:[{display:"Village complete",template:"village_{}_complete"}],cat:"other"},
+  {name:"Domino Dreams",package:"com.screenshake.dominodreams",dev_key:"Hn5qYjVAaRNJYDcwF4LaWF",level_events:[{display:"Area completed",template:"af_area_{}_completed"}],cat:"other"},
+  {name:"Solitaire Grand Harvest",package:"net.supertreat.solitaire",dev_key:"X8aGgdWELNb5L96fCy44oL",level_events:[{display:"Level up",template:"level_up_{}"}],cat:"other"},
+  {name:"Cuisine Master",package:"com.FortuneMine.CuisineMaster",dev_key:"im6mgZbZJsHKGVowkkxkGm",level_events:[{display:"Level completed",template:"level{}_completed"}],cat:"other"},
+  {name:"Match Factory",package:"net.peakgames.match",dev_key:"F9M4SkdtH8WHcAt86ESrF3",level_events:[{display:"Level completed",template:"level_{}_completed"}],cat:"puzzle"},
+  {name:"Toon Blast",package:"net.peakgames.toonblast",dev_key:"F9M4SkdtH8WHcAt86ESrF3",level_events:[{display:"Level completed",template:"level_{}_completed"}],cat:"other"},
+  {name:"Toy Blast",package:"net.peakgames.amy",dev_key:"F9M4SkdtH8WHcAt86ESrF3",level_events:[{display:"Level completed",template:"level_{}_completed"}],cat:"other"},
+  {name:"Box Jam",package:"com.playoneer.boxjam",dev_key:"cSJjCEwX2cCtJrNH92xM7n",level_events:[{display:"Level completed",template:"level_completed"}],cat:"puzzle"},
+  {name:"Gardenscapes",package:"com.playrix.gardenscapes",dev_key:"ixMH7WQi4SqLAmPWuyAtkH",level_events:[{display:"Level achieved",template:"AchievedLevel{}"}],cat:"other"},
+  {name:"Dice Dreams",package:"com.superplaystudios.dicedreams",dev_key:"Hn5qYjVAaRNJYDcwF4LaWF",level_events:[{display:"Kingdom restored",template:"af_kingdom_{}_restored"}],cat:"other"},
+  {name:"Taylor's Secret",package:"com.mergegames.taylorsecret",dev_key:"qbKVyawAiwNX3b4D3Frijm",level_events:[{display:"Level achieved",template:"level_{}"}],cat:"merge"},
+  {name:"Big Farm Homestead",package:"com.newmoonproduction.bigfarmhomestead",dev_key:"FtaT5WH9rMJjJkMd4LfBCT",level_events:[{display:"Level achieved",template:"af_level{}_achieved"}],cat:"farm"},
+  {name:"Sunshine Island",package:"com.newmoonproduction.sunshineisland",dev_key:"FtaT5WH9rMJjJkMd4LfBCT",level_events:[{display:"Level achieved",template:"af_level{}_achieved"}],cat:"farm"},
+  {name:"Idle Bank Tycoon",package:"com.luckyskeletonstudios.idlebanktycoon",dev_key:"DwzgMQDkEVMy3ntcgz7utV",level_events:[{display:"Bank started",template:"af_bank{}_started"}],cat:"other"},
+  {name:"FarmVille 3",package:"com.zynga.farmville3",dev_key:"KVJuxDJVXQRPoqUVdyWJtj",level_events:[{display:"Player level",template:"Player_Level{}"}],cat:"farm"},
+  {name:"Township",package:"com.playrix.township",dev_key:"ixMH7WQi4SqLAmPWuyAtkH",level_events:[{display:"Achieved level",template:"achievedlevel{}"}],cat:"farm"},
+  {name:"Merge Match",package:"com.futureplay.mergematch",dev_key:"nr8SibwpFjcKGBQNpDdttd",level_events:[{display:"Incent Level Up",template:"Incent_Player_Level_Up_{}"}],cat:"merge"},
+  {name:"FarmVille 2",package:"com.zynga.FarmVille2CountryEscape",dev_key:"438VCPmX2ZLYvsDPfGLZXb",level_events:[{display:"Level complete",template:"Level{}Complete"}],cat:"farm"},
+  {name:"Merge Studio",package:"com.paxiegames.mergestudio",dev_key:"mFaiXvTWy8votzp3UpsSfS",level_events:[{display:"Level completed",template:"level_completed_{}"}],cat:"merge"},
+  {name:"Goods Master 3D",package:"com.goods.master3d.triple.puzzle",dev_key:"oUYXWsx5SVDbJwtSCCymUD",level_events:[{display:"Level achieved",template:"af_Level_{}"}],cat:"puzzle"},
+  {name:"Tiles Mosaic",package:"com.tripledot.tiles.mosaic",dev_key:"j7J8eEwxvuQbDDFo3agC9X",level_events:[{display:"Game complete",template:"GameComplete_{}"}],cat:"puzzle"},
+  {name:"Travel Town",package:"io.randomco.travel",dev_key:"wizhvjciCuaDbAaR8KpZLn",level_events:[{display:"Level achieved",template:"reachedLevel{}"}],cat:"other"},
+  {name:"Disney Solitaire Dreams",package:"com.superplaystudios.disneysolitairedreams",dev_key:"Hn5qYjVAaRNJYDcwF4LaWF",level_events:[{display:"Area completed",template:"af_area_{}_completed"}],cat:"other"},
+  {name:"Match Masters",package:"com.funtomic.matchmasters",dev_key:"EJcrH2pxmBbsWKHJHdrs3c",level_events:[{display:"Trophies reached",template:"trophies_{}"}],cat:"other"},
+  {name:"Coin Master Board",package:"com.moonactive.cmboard",dev_key:"H3KjoCRVTiVgA5mWSAHtCe",level_events:[{display:"Village complete",template:"village_{}_complete"}],cat:"other"},
+  {name:"Empires & Puzzles",package:"com.smallgiantgames.empires",dev_key:"wStj8eCCuE84shUTkh7ZGc",level_events:[{display:"XP Level reached",template:"xp_level_{}"}],cat:"other"},
+  {name:"Merge Dragons",package:"com.gramgames.mergedragons",dev_key:"fyKVEgAYzuD6jBZocaq3yh",level_events:[{display:"Dragon Power reached",template:"event_{}_dragon_power"}],cat:"merge"},
+  {name:"Yarn Loop",package:"com.combo.yarnflow",dev_key:"TGm97uKTJF7qFCvREggWtf",level_events:[{display:"Level completed",template:"level_complete_{}"}],cat:"other"}
 ];
 
-// المتغيرات التشغيلية الحية لربط المكونات
-let serverUrl = '';
+/* ─── SERVER STATE ─── */
+let serverUrl = localStorage.getItem('pp_server') || '';
 let serverConnected = false;
+
+if (serverUrl) {
+  document.getElementById('server-url').value = serverUrl;
+  document.getElementById('settings-server').value = serverUrl;
+  connectServer();
+}
+
+async function connectServer() {
+  let url = document.getElementById('server-url').value.trim();
+  if (!url) {
+    serverConnected = false;
+    setServerDot('');
+    return;
+  }
+  if (!url.startsWith('http')) url = 'https://' + url;
+  url = url.replace(/\/$/, '');
+  setServerDot('');
+  showToast('loading', null, 'جاري الاتصال...', url);
+  try {
+    const res = await fetch(url + '/', { signal: AbortSignal.timeout(8000) });
+    if (res.ok) {
+      serverUrl = url;
+      localStorage.setItem('pp_server', url);
+      serverConnected = true;
+      setServerDot('ok');
+      document.getElementById('py-badge').textContent = '🌐 Server';
+      document.getElementById('py-badge').style.background = '#1a3020';
+      document.getElementById('py-badge').style.color = '#5de8a0';
+      document.getElementById('btn-run').disabled = false;
+      document.getElementById('btn-run2').disabled = false;
+      document.getElementById('btn-pip').disabled = false;
+      showToast('success', '✅', 'متصل بالخادم!', 'كل الحركات ستمر عبر ريلواي الآن لتفادي CORS');
+    }
+  } catch(e) {
+    setServerDot('err');
+    showToast('error', '❌', 'فشل الاتصال', 'تحقق من الرابط');
+  }
+}
+
+function setServerDot(cls) {
+  const d = document.getElementById('server-dot');
+  d.className = 'server-dot' + (cls ? ' ' + cls : '');
+}
+
+async function runWithServer() {
+  const code = document.getElementById('code-editor').value.trim();
+  if (!code) { showToast('error', '⚠', 'الكود فارغ', 'اكتب كود Python أولاً'); return; }
+  clearOutput();
+  appendOutput('// ▶ جاري التشغيل على الخادم...\n', 'sys');
+  document.getElementById('btn-run').disabled = true;
+  document.getElementById('btn-run2').disabled = true;
+  const start = Date.now();
+  try {
+    const res = await fetch(serverUrl + '/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+      signal: AbortSignal.timeout(35000)
+    });
+    const data = await res.json();
+    const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+    if (data.stdout) appendOutput(data.stdout, 'stdout');
+    if (data.stderr) appendOutput(data.stderr, 'stderr');
+    if (data.returncode === 0) {
+      appendOutput('\n// ✅ اكتمل في ' + elapsed + 'ث\n', 'success');
+    } else {
+      appendOutput('\n// ❌ خطأ في الكود\n', 'error');
+    }
+  } catch(e) {
+    appendOutput('❌ خطأ: ' + e.message + '\n', 'error');
+  } finally {
+    document.getElementById('btn-run').disabled = false;
+    document.getElementById('btn-run2').disabled = false;
+  }
+}
+
+async function pipWithServer(pkg) {
+  const btn = document.getElementById('btn-pip');
+  btn.disabled = true; btn.textContent = '⏳';
+  showToast('loading', null, 'pip install ' + pkg, 'جاري التثبيت...');
+  try {
+    const res = await fetch(serverUrl + '/pip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ package: pkg }),
+      signal: AbortSignal.timeout(65000)
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('success', '✅', 'تم التثبيت', pkg + ' جاهز!');
+      appendOutput('✅ تم تثبيت: ' + pkg + '\n', 'success');
+      document.getElementById('pip-input').value = '';
+    } else {
+      showToast('error', '❌', 'فشل التثبيت', data.message || '');
+      appendOutput('❌ فشل: ' + (data.message || '') + '\n', 'error');
+    }
+  } catch(e) {
+    showToast('error', '❌', 'خطأ', e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'تثبيت';
+  }
+}
+
+/* ─── STATE ─── */
+let curGaid = localStorage.getItem('pp_gaid') || '70ebe327-e224-4b1e-adb0-b09a27f78a0f';
+let curAfid = localStorage.getItem('pp_afid') || '1779417828531-7129893952045055065';
 let activeGame = null;
-let curGaid = '';
-let curAfid = '';
-let simulating = false;
-let simInterval = null;
+let eventLog = [];
+let activeFilter = 'all';
+let toastTimer = null;
+let pyodide = null;
+let pyReady = false;
+let installedPkgs = JSON.parse(localStorage.getItem('pp_pkgs') || '[]');
 
-// مرجع عناصر الواجهة لتحديث البيانات بسرعة وسلاسة
-const gameSelect = document.getElementById('gameSelect');
-const manualActions = document.getElementById('manualActions');
-const startSimBtn = document.getElementById('startSimBtn');
-const stopSimBtn = document.getElementById('stopSimBtn');
-const simProgressContainer = document.getElementById('simProgressContainer');
-const simLogTable = document.getElementById('simLogTable');
-const logContainer = document.getElementById('logContainer');
-const connectionStatus = document.getElementById('connectionStatus');
-const deviceDetectorBadge = document.getElementById('deviceDetectorBadge');
+/* ─── INIT ─── */
+updateIdDisplay();
+renderGames(GAMES_DATA);
+loadSettingsValues();
+renderSnippets();
+renderInstalledPkgs();
 
-// تهيئة قائمة الألعاب في الواجهة الرسومية عند فتح الصفحة
-GAMES_DATA.forEach((game, index) => {
-    const opt = document.createElement('option');
-    opt.value = index;
-    opt.textContent = `${game.name} (${game.package})`;
-    gameSelect.appendChild(opt);
+// Load Pyodide
+loadPyodideRuntime();
+
+/* ─── NAVIGATION ─── */
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'games') {
+    const mainView = document.getElementById('view-main');
+    const detailView = document.getElementById('view-detail');
+    if (!mainView.classList.contains('active') && !detailView.classList.contains('active')) {
+      showView('view-main');
+    }
+  }
+}
+
+/* ─── GAMES ─── */
+function updateIdDisplay() {
+  document.getElementById('display-gaid').textContent = curGaid.substring(0, 18) + '...';
+  document.getElementById('display-afid').textContent = curAfid.substring(0, 18) + '...';
+  document.getElementById('settings-gaid').value = curGaid;
+  document.getElementById('settings-afid').value = curAfid;
+}
+
+function renderGames(list) {
+  const grid = document.getElementById('games-grid');
+  const noResults = document.getElementById('no-results');
+  if (!list.length) { grid.innerHTML = ''; noResults.style.display = 'block'; return; }
+  noResults.style.display = 'none';
+  grid.innerHTML = list.map((g) => {
+    const i = GAMES_DATA.indexOf(g);
+    return `<div class="game-card" onclick="openGame(${i})">
+      <div class="game-num">#${String(i+1).padStart(2,'0')}</div>
+      <div class="game-name">${g.name}</div>
+      <div class="game-pkg">${g.package}</div>
+    </div>`;
+  }).join('');
+}
+
+function filterGames(cat, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  activeFilter = cat;
+  applyFilters();
+}
+
+function searchGames(q) { applyFilters(q); }
+
+function applyFilters(q) {
+  q = q !== undefined ? q : document.querySelector('.search-input').value;
+  let list = GAMES_DATA;
+  if (activeFilter !== 'all') list = list.filter(g => g.cat === activeFilter);
+  if (q) list = list.filter(g => g.name.toLowerCase().includes(q.toLowerCase()) || g.package.toLowerCase().includes(q.toLowerCase()));
+  renderGames(list);
+}
+
+function openGame(idx) {
+  activeGame = GAMES_DATA[idx];
+  const hasNumber = activeGame.level_events[0].template.includes('{}');
+  document.getElementById('detail-game-name').textContent = activeGame.name;
+  document.getElementById('detail-pkg').textContent = activeGame.package;
+  document.getElementById('event-template-display').textContent = activeGame.level_events[0].template;
+  const lvlInput = document.getElementById('level-input');
+  lvlInput.style.display = hasNumber ? 'block' : 'none';
+  lvlInput.value = '';
+  document.getElementById('event-preview').textContent = hasNumber ? '' : activeGame.level_events[0].template;
+  document.getElementById('event-log').innerHTML = '<div class="log-empty">لا توجد أحداث بعد</div>';
+  eventLog = [];
+  showView('view-detail');
+}
+
+function goBack() { showView('view-main'); }
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function updateEventPreview() {
+  const tmpl = activeGame.level_events[0].template;
+  const val = document.getElementById('level-input').value;
+  if (tmpl.includes('{}') && val) {
+    document.getElementById('event-preview').textContent = '→ ' + tmpl.replace('{}', val);
+  } else {
+    document.getElementById('event-preview').textContent = '';
+  }
+}
+
+async function sendLevelEvent() {
+  const tmpl = activeGame.level_events[0].template;
+  const hasNum = tmpl.includes('{}');
+  const val = document.getElementById('level-input').value;
+  if (hasNum && !val) { showToast('error', '⚠', 'خطأ', 'أدخل رقم المستوى أولاً'); return; }
+  const evName = hasNum ? tmpl.replace('{}', val) : tmpl;
+  await sendEvent('level', evName);
+}
+
+async function sendPurchase() { await sendEvent('purchase', 'af_purchase'); }
+
+/* ═══ الدالة المعدلة حتمياً للمرور عبر ريلواي لتخطي الـ CORS ═══ */
+async function sendEvent(type, evName) {
+  if (!activeGame) return;
+  
+  if (!serverConnected || !serverUrl) {
+    showToast('error', '🌐', 'خطأ في السيرفر', 'يرجى ربط سيرفر Railway أولاً لتخطي الـ CORS المباشر');
+    addLog(evName, 'CORS ERR', false);
+    return;
+  }
+
+  showToast('loading', null, 'جاري التمرير عبر Railway Proxy...', evName);
+  
+  const appsFlyerBody = {
+    appsflyer_id: curAfid,
+    advertising_id: curGaid,
+    eventName: evName,
+    eventTime: new Date().toISOString(),
+    eventValue: type === 'purchase' ? JSON.stringify({af_revenue:"4.99",af_currency:"USD"}) : "{}"
+  };
+
+  const proxyPayload = {
+    package: activeGame.package,
+    dev_key: activeGame.dev_key,
+    body: appsFlyerBody
+  };
+
+  try {
+    const res = await fetch(serverUrl + '/api/send-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(proxyPayload)
+    });
+
+    const data = await res.json();
+    const status = res.status;
+    
+    if (res.ok && data.success) {
+      addLog(evName, `Railway: ${data.status_code}`, true);
+      showToast('success', '✅', `تم الإرسال بنجاح (${data.status_code})`, evName);
+    } else {
+      addLog(evName, `ERR: ${status}`, false);
+      showToast('error', '❌', `فشل التمرير: ${data.error || status}`, evName);
+    }
+  } catch(e) {
+    addLog(evName, 'NET ERR', false);
+    showToast('error', '🔌', 'خطأ في الاتصال بالسيرفر', e.message || 'تحقق من الشبكة والبروكسي');
+  }
+}
+
+function addLog(name, status, ok) {
+  const now = new Date();
+  const time = [now.getHours(), now.getMinutes(), now.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+  eventLog.unshift({name, status, ok, time});
+  document.getElementById('event-log').innerHTML = eventLog.map(e => `
+    <div class="log-entry">
+      <div class="log-dot ${e.ok ? 'success' : 'error'}"></div>
+      <div class="log-time">${e.time}</div>
+      <div class="log-text">${e.name}</div>
+      <div class="log-status">${e.status}</div>
+    </div>
+  `).join('');
+}
+
+/* ─── MODALS ─── */
+function openIdModal() {
+  document.getElementById('modal-gaid-input').value = curGaid;
+  document.getElementById('modal-afid-input').value = curAfid;
+  document.getElementById('id-modal').classList.add('open');
+}
+function closeIdModal() { document.getElementById('id-modal').classList.remove('open'); }
+function saveIds() {
+  const g = document.getElementById('modal-gaid-input').value.trim();
+  const a = document.getElementById('modal-afid-input').value.trim();
+  if (g) { curGaid = g; localStorage.setItem('pp_gaid', g); }
+  if (a) { curAfid = a; localStorage.setItem('pp_afid', a); }
+  updateIdDisplay();
+  closeIdModal();
+  showToast('success', '✅', 'تم الحفظ', 'تم تحديث IDs بنجاح');
+}
+document.getElementById('id-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeIdModal();
 });
 
-// ==================== [ وظائف التحقق والربط الذكي ] ====================
-
-// دالة الكشف التلقائي والذكي عن نوع الجهاز من خلال قراءة النص المدخل
-function detectDeviceType() {
-    const val = document.getElementById('gaidInput').value.trim();
-    curGaid = val;
-    if(!val) {
-        deviceDetectorBadge.innerHTML = `<span class="text-muted">سيتم تحديد نوع الجهاز تلقائياً من نمط المعرف.</span>`;
-        return;
-    }
-    // إذا احتوى المعرف على حزم شرطية وحروف إنجليزية كبيرة فهو حتماً معرف آيفون IDFA
-    const isIOS = val.includes('-') && /[A-Z]/.test(val);
-    if(isIOS) {
-        deviceDetectorBadge.innerHTML = `<span class="badge bg-dark text-white"><i class="fa-brands fa-apple me-1"></i> نمط المعرف متوافق مع: آيفون (IDFA)</span>`;
-    } else {
-        deviceDetectorBadge.innerHTML = `<span class="badge bg-success text-white"><i class="fa-brands fa-android me-1"></i> نمط المعرف متوافق مع: أندرويد (GAID)</span>`;
-    }
-    updateSimButtons();
+/* ─── TOAST ─── */
+function showToast(type, icon, title, detail) {
+  const toast = document.getElementById('toast');
+  toast.className = 'toast ' + type;
+  if (type === 'loading') {
+    document.getElementById('toast-icon').innerHTML = '<div class="spinner"></div>';
+  } else {
+    document.getElementById('toast-icon').textContent = icon;
+  }
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-detail').textContent = detail;
+  toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  if (type !== 'loading') toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// دالة فحص وتأكيد الاتصال بسيرفر Railway
-async function connectServer() {
-    let inputUrl = document.getElementById('serverUrlInput').value.trim();
-    if(!inputUrl) {
-        showToast('error', '⚠️', 'خطأ في الإدخال', 'يرجى كتابة رابط السيرفر أولاً');
-        return;
-    }
-    if(inputUrl.endsWith('/')) inputUrl = inputUrl.slice(0, -1);
-    
-    showToast('loading', null, 'جاري فحص اتصال السيرفر...', inputUrl);
-    
-    try {
-        const res = await fetch(inputUrl + '/api/status', { method: 'GET' });
-        const data = await res.json();
-        if(res.ok && data.status === "healthy") {
-            serverUrl = inputUrl;
-            serverConnected = true;
-            connectionStatus.className = "status-badge status-connected";
-            connectionStatus.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> السيرفر متصل ويعمل بكفاءة`;
-            showToast('success', '🌐', 'اتصال ناجح!', 'تم ربط سيرفر Railway بنجاح والتغلب على قيود الـ CORS');
-            addLog('SYSTEM', 'Connected to proxy server successfully.', true);
-        } else {
-            throw new Error('رد غير متوقع من السيرفر');
-        }
-    } catch(e) {
-        serverConnected = false;
-        connectionStatus.className = "status-badge status-disconnected";
-        connectionStatus.innerHTML = `<i class="fa-solid fa-circle-xmark me-1"></i> السيرفر غير متصل`;
-        showToast('error', '❌', 'فشل الاتصال', 'لم يتم العثور على استجابة من مسار السيرفر المحدد');
-        addLog('SYSTEM_ERR', `Failed to link server: ${e.message}`, false);
-    }
-    updateSimButtons();
+/* ─── SETTINGS ─── */
+function loadSettingsValues() {
+  document.getElementById('settings-gaid').value = curGaid;
+  document.getElementById('settings-afid').value = curAfid;
+}
+function autoSaveId(type) {
+  const val = document.getElementById('settings-' + type).value.trim();
+  if (type === 'gaid') { curGaid = val; localStorage.setItem('pp_gaid', val); }
+  else { curAfid = val; localStorage.setItem('pp_afid', val); }
+  updateIdDisplay();
+}
+function toggleSetting(key, el) {
+  el.classList.toggle('on');
+  localStorage.setItem('pp_setting_' + key, el.classList.contains('on') ? '1' : '0');
+}
+function clearAllData() {
+  if (confirm('هل أنت متأكد؟ سيتم حذف جميع البيانات المحفوظة.')) {
+    localStorage.clear();
+    location.reload();
+  }
 }
 
-// دالة تفعيل الأزرار عند تغيير واختيار اللعبة
-function onGameChange() {
-    const idx = gameSelect.value;
-    if(idx === "") {
-        activeGame = null;
-        manualActions.classList.add('d-none');
-    } else {
-        activeGame = GAMES_DATA[idx];
-        manualActions.classList.remove('d-none');
-        addLog('GAME_SELECT', `Active Target Changed to: ${activeGame.name}`, true);
-    }
-    updateSimButtons();
-}
-
-// دالة تحديث حالة الأزرار بناءً على مدخلات السيرفر والمعرفات واللعبة
-function updateSimButtons() {
-    curAfid = document.getElementById('afidInput').value.trim();
-    const canSimulate = serverConnected && activeGame && curGaid && curAfid && !simulating;
-    startSimBtn.disabled = !canSimulate;
-}
-
-// مراقبة حقول النصوص لتحديث حالة الأزرار في نفس اللحظة
-document.getElementById('afidInput').addEventListener('input', updateSimButtons);
-document.getElementById('gaidInput').addEventListener('input', updateSimButtons);
-
-// ==================== [ الدوال البرمجية لإرسال الأحداث وتحديد المنصات الذكية ] ====================
-
-// 1. الدالة الأساسية لإرسال الأحداث اليدوية (تمت هندستها لتدعم المنصتين بذكاء)
-async function sendEvent(type, evName) {
-    if (!activeGame) return;
-    
-    if (!serverConnected || !serverUrl) {
-        showToast('error', '🌐', 'خطأ في السيرفر', 'يرجى ربط سيرفر Railway أولاً لتخطي الـ CORS المباشر');
-        addLog(evName, 'CORS ERR - Missing Proxy Server Connection', false);
-        return;
-    }
-
-    showToast('loading', null, 'جاري التمرير عبر البروكسي الحصري...', evName);
-    
-    // التحقق الحتمي الحقيقي لنوع الجهاز بناءً على كود المعرف المدخل
-    const isIOS = curGaid.includes('-') && /[A-Z]/.test(curGaid);
-
-    // بناء الهيكل الأساسي للطلب الموجه لـ AppsFlyer مع تهيئة معطيات النظام بشكل ديناميكي
-    const appsFlyerBody = {
-        appsflyer_id: curAfid,
-        eventName: evName,
-        eventTime: new Date().toISOString(),
-        eventValue: type === 'purchase' ? JSON.stringify({af_revenue:"4.99",af_currency:"USD"}) : "{}",
-        os: isIOS ? "ios" : "android",
-        os_version: isIOS ? "17.5" : "10.0",
-        device_model: isIOS ? "iPhone14,2" : "Samsung SM-G998B"
-    };
-
-    // تطبيق شرط التفريق الحاسم لحقن معلمات المفتاح الصحيح لنوع الهاتف المستهدف
-    if (isIOS) {
-        appsFlyerBody.idfa = curGaid;
-    } else {
-        appsFlyerBody.advertising_id = curGaid;
-    }
-
-    // تجهيز حزمة الشحن الكلية المتجهة لوسيط التمرير مع اختيار مفتاح التطوير الذكي والخاص بالمنصة
-    const proxyPayload = {
-        package: activeGame.package,
-        dev_key: isIOS ? activeGame.dev_key_ios : activeGame.dev_key, // الاختيار الذكي لمفتاح الـ iOS أو الأندرويد للعبة
-        body: appsFlyerBody
-    };
-
-    try {
-        const res = await fetch(serverUrl + '/api/send-event', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(proxyPayload)
+/* ══════════════════════════════════════════════
+   🐍 PYTHON / PYODIDE ENGINE
+══════════════════════════════════════════════ */
+async function loadPyodideRuntime() {
+  setPyStatus('loading', '🐍 تحميل Python...');
+  try {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js';
+    document.head.appendChild(script);
+    script.onload = async () => {
+      try {
+        setPyStatus('loading', '⚙️ تهيئة البيئة...');
+        pyodide = await loadPyodide({
+          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/',
+          stdout: (text) => appendOutput(text, 'stdout'),
+          stderr: (text) => appendOutput(text, 'stderr'),
         });
 
-        const data = await res.json();
-        
-        if (res.ok && data.success) {
-            addLog(evName, `[${isIOS ? 'iOS' : 'Android'}] Proxy Relay Success: ${data.status_code}`, true);
-            showToast('success', '✅', `تم الإرسال بنجاح (${data.status_code})`, evName);
-        } else {
-            addLog(evName, `[${isIOS ? 'iOS' : 'Android'}] Server Rejected: ${res.status} - ${data.error || 'Unknown'}`, false);
-            showToast('error', '❌', `فشل التمرير: ${data.error || res.status}`, evName);
+        pyodide.runPython(`
+import sys, io
+class OutputCapture:
+    def __init__(self, kind):
+        self.kind = kind
+    def write(self, text):
+        if text.strip():
+            from js import appendPyOutput
+            appendPyOutput(text, self.kind)
+    def flush(self): pass
+sys.stdout = OutputCapture('stdout')
+sys.stderr = OutputCapture('stderr')
+        `);
+
+        pyReady = true;
+        setPyStatus('ready', '✅ Python جاهز');
+        if (!serverConnected) {
+          document.getElementById('py-badge').textContent = '🐍 Ready';
+          document.getElementById('py-badge').style.background = '#1a3020';
+          document.getElementById('py-badge').style.color = '#5de8a0';
         }
-    } catch(e) {
-        addLog(evName, `Network Connection Failed: ${e.message}`, false);
-        showToast('error', '🔌', 'خطأ في الاتصال بالشبكة', e.message || 'تحقق من السيرفر');
+        document.getElementById('btn-run').disabled = false;
+        document.getElementById('btn-run2').disabled = false;
+        document.getElementById('btn-pip').disabled = false;
+
+        for (const pkg of installedPkgs) {
+          await silentInstall(pkg);
+        }
+        clearOutput();
+        appendOutput('// Python ' + pyodide.runPython('import sys; sys.version') + '\n', 'sys');
+        appendOutput('// الحزم المتاحة: micropip, numpy, pandas, requests, json, math, re, datetime, ...\n', 'sys');
+        appendOutput('// اكتب كودك في المحرر أعلاه ثم اضغط ▶ تشغيل\n', 'sys');
+      } catch(e) {
+        setPyStatus('error', '❌ فشل التهيئة');
+        appendOutput('Error: ' + e.message, 'error');
+      }
+    };
+    script.onerror = () => {
+      setPyStatus('error', '❌ فشل التحميل — تحقق من الإنترنت');
+    };
+  } catch(e) {
+    setPyStatus('error', '❌ ' + e.message);
+  }
+}
+
+window.appendPyOutput = function(text, kind) {
+  appendOutput(text, kind === 'stderr' ? 'stderr' : 'stdout');
+};
+
+function setPyStatus(cls, text) {
+  const el = document.getElementById('py-status');
+  el.className = 'py-status ' + cls;
+  el.textContent = text;
+}
+
+async function runPython() {
+  if (serverConnected) { await runWithServer(); return; }
+  if (!pyReady) { showToast('error', '⏳', 'Python ليس جاهزاً', 'انتظر اكتمال التحميل'); return; }
+  const code = document.getElementById('code-editor').value.trim();
+  if (!code) { showToast('error', '⚠', 'الكود فارغ', 'اكتب كود Python أولاً'); return; }
+
+  clearOutput();
+  appendOutput('// ▶ تشغيل الكود...\n', 'sys');
+
+  try {
+    pyodide.runPython(`
+import sys
+class OutputCapture:
+    def __init__(self, kind):
+        self.kind = kind
+        self.buf = []
+    def write(self, text):
+        if text:
+            from js import appendPyOutput
+            appendPyOutput(text, self.kind)
+    def flush(self): pass
+sys.stdout = OutputCapture('stdout')
+sys.stderr = OutputCapture('stderr')
+    `);
+    const result = await pyodide.runPythonAsync(code);
+    if (result !== undefined && result !== null) {
+      appendOutput(String(result) + '\n', 'stdout');
     }
+    appendOutput('\n// ✅ اكتمل التشغيل\n', 'success');
+  } catch(e) {
+    appendOutput(e.message + '\n', 'error');
+    appendOutput('// ❌ خطأ في الكود\n', 'sys');
+  }
 }
 
-// دالة معالجة إرسال حدث اللفل المخصص واليدوي بناء على نمط اللعبة المختارة
-function sendCustomLevelEvent() {
-    const lvl = document.getElementById('levelInput').value.trim();
-    if(!lvl) return;
-    const formattedEvent = activeGame.template.replace('{}', lvl);
-    sendEvent('level', formattedEvent);
-}
+async function installPackage() {
+  const pkg = document.getElementById('pip-input').value.trim().toLowerCase();
+  if (!pkg) return;
+  if (serverConnected) { await pipWithServer(pkg); return; }
+  if (!pyReady) { showToast('error', '⏳', 'Python ليس جاهزاً', 'انتظر التحميل'); return; }
 
-// 2. دالة المحاكاة والعداد التلقائي (تمت إضافة الفحص والربط المزدوج بها لنسخة الـ iOS بالكامل)
-function startAutoSimulation() {
-    if (!activeGame || !serverConnected || !serverUrl) return;
+  const btn = document.getElementById('btn-pip');
+  btn.disabled = true;
+  btn.textContent = '⏳...';
+  showToast('loading', null, 'pip install ' + pkg, 'جاري التثبيت...');
 
-    const countInput = document.getElementById('simCount');
-    const delayInput = document.getElementById('simDelay');
-    const count = parseInt(countInput.value) || 10;
-    const delay = parseInt(delayInput.value) || 2;
-
-    simulating = true;
-    simLogTable.innerHTML = '';
-    simProgressContainer.classList.remove('d-none');
-    
-    startSimBtn.classList.add('d-none');
-    stopSimBtn.classList.remove('d-none');
-    gameSelect.disabled = true;
-
-    // الفحص الحتمي المبكر لنوع المعرف قبل البدء في السلسلة التلقائية للعداد
-    const isIOS = curGaid.includes('-') && /[A-Z]/.test(curGaid);
-    let currentStep = 0;
-
-    addLog('AUTO_SIM', `Started automated simulator chain for ${count} events using [${isIOS ? 'iOS' : 'Android'}] backend.`, true);
-
-    simInterval = setInterval(async () => {
-        if (currentStep >= count || !simulating) {
-            clearInterval(simInterval);
-            simulating = false;
-            startSimBtn.classList.remove('d-none');
-            stopSimBtn.classList.add('d-none');
-            gameSelect.disabled = false;
-            updateSimButtons();
-            showToast('success', '🏆', 'اكتملت السلسلة التلقائية', `تم بنجاح دفع ${currentStep} حدث متتالي عبر نظام ريلواي.`);
-            return;
-        }
-
-        // صياغة اسم حدث اللفل المختار تلقائياً بناءً على موضع الخطوة في العداد
-        const currentLvl = currentStep + 1;
-        const evName = activeGame.template.replace('{}', currentLvl);
-        
-        // بناء وتجهيز هيكل البيانات المخصصة للحزمة التلقائية
-        const appsFlyerBody = {
-            appsflyer_id: curAfid,
-            eventName: evName,
-            eventTime: new Date().toISOString(),
-            eventValue: "{}",
-            os: isIOS ? "ios" : "android",
-            os_version: isIOS ? "17.5" : "10.0",
-            device_model: isIOS ? "iPhone14,2" : "Samsung SM-G998B"
-        };
-
-        // حقن المعرف الدقيق المناسب لنوع النظام المكتشف
-        if (isIOS) {
-            appsFlyerBody.idfa = curGaid;
-        } else {
-            appsFlyerBody.advertising_id = curGaid;
-        }
-
-        // بناء الحزمة النهائية الموجهة إلى نقطة النهاية في السيرفر الوسيط مع سحب المفتاح المناسب
-        const proxyPayload = {
-            package: activeGame.package,
-            dev_key: isIOS ? activeGame.dev_key_ios : activeGame.dev_key,
-            body: appsFlyerBody
-        };
-
-        // إنشاء وتثبيت سطر المراقبة والتحقق في الجدول الداخلي للواجهة
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${currentLvl}</td><td><code>${evName}</code></td><td class="text-warning fw-bold"><i class="fa-solid fa-spinner fa-spin me-1"></i> جاري الدفع...</td>`;
-        simLogTable.appendChild(row);
-        row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-        try {
-            const res = await fetch(serverUrl + '/api/send-event', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(proxyPayload)
-            });
-            const data = await res.json();
-            
-            if (res.ok && data.success) {
-                row.cells[2].innerHTML = `<span class="text-success fw-bold"><i class="fa-solid fa-check-double me-1"></i> نجاح (${data.status_code})</span>`;
-                addLog('AUTO_SIM_STEP', `Step ${currentLvl}: Sent ${evName} -> Code: ${data.status_code}`, true);
-            } else {
-                row.cells[2].innerHTML = `<span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i> رفض (${res.status})</span>`;
-                addLog('AUTO_SIM_ERR', `Step ${currentLvl} Rejected by endpoint: Code ${res.status}`, false);
-            }
-        } catch (e) {
-            row.cells[2].innerHTML = `<span class="text-danger fw-bold"><i class="fa-solid fa-ban me-1"></i> خطأ اتصال</span>`;
-            addLog('AUTO_SIM_NET', `Step ${currentLvl} Network Failure: ${e.message}`, false);
-        }
-
-        currentStep++;
-    }, delay * 1000);
-}
-
-// دالة الإيقاف الفوري لعمل العداد التلقائي والمحاكاة التتابعية
-function stopAutoSimulation() {
-    if(simInterval) clearInterval(simInterval);
-    simulating = false;
-    startSimBtn.classList.remove('d-none');
-    stopSimBtn.classList.add('d-none');
-    gameSelect.disabled = false;
-    updateSimButtons();
-    addLog('AUTO_SIM', 'Automated simulation paused by operator command.', false);
-    showToast('warning', '⏸️', 'تم الإيقاف', 'تم إيقاف سلسلة إرسال الأحداث تلقائياً.');
-}
-
-// ==================== [ أدوات واجهة المستخدم المساعدة والسجلات ] ====================
-
-// دالة إضافة السجلات البرمجية المباشرة في شاشة العرض السوداء
-function addLog(action, message, isSuccess = true) {
-    const time = new Date().toLocaleTimeString();
-    const colorClass = isSuccess ? 'text-success' : 'text-danger';
-    const indicator = isSuccess ? '🟢' : '🔴';
-    
-    const logEntry = document.createElement('div');
-    logEntry.className = 'log-entry';
-    logEntry.innerHTML = `<span class="text-muted">[${time}]</span> ${indicator} <span class="fw-bold text-info">${action}:</span> <span class="${colorClass}">${message}</span>`;
-    
-    logContainer.appendChild(logEntry);
-    logContainer.scrollTop = logContainer.scrollHeight;
-}
-
-// دالة مسح شاشة السجلات السوداء
-function clearLogs() {
-    logContainer.innerHTML = '<div class="text-muted small">[نظام]: تم مسح شاشة المراقبة بنجاح وبانتظار العمليات الحية...</div>';
-}
-
-// دالة بناء وعرض التنبيهات المنبثقة الذكية (Toasts) أسفل الشاشة
-function showToast(type, icon, title, msg) {
-    const toastId = 'toast_' + Date.now();
-    let borderClass = 'border-primary';
-    if(type === 'success') borderClass = 'border-success';
-    if(type === 'error') borderClass = 'border-danger';
-    if(type === 'warning') borderClass = 'border-warning';
-    
-    const toastHtml = `
-        <div id="${toastId}" class="toast show bg-white border-start border-4 ${borderClass}" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 280px; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-            <div class="toast-header bg-light">
-                <span class="me-2">${icon || '<i class="fa-solid fa-gear fa-spin text-primary"></i>'}</span>
-                <strong class="me-auto text-dark">${title}</strong>
-                <button type="button" class="btn-close" onclick="document.getElementById('${toastId}').remove()"></button>
-            </div>
-            <div class="toast-body text-secondary small">${msg}</div>
-        </div>
-    `;
-    
-    const container = document.getElementById('toastContainer');
-    container.insertAdjacentHTML('beforeend', toastHtml);
-    
-    // الاختفاء التلقائي بعد مرور 4 ثوانٍ إذا لم يكن التنبيه في حالة تحميل مستمرة
-    if(type !== 'loading') {
-        setTimeout(() => {
-            const el = document.getElementById(toastId);
-            if(el) el.remove();
-        }, 4000);
+  try {
+    await pyodide.loadPackagesFromImports(`import ${pkg}`).catch(() => {});
+    await pyodide.runPythonAsync(`
+import micropip
+await micropip.install('${pkg}')
+    `);
+    if (!installedPkgs.includes(pkg)) {
+      installedPkgs.push(pkg);
+      localStorage.setItem('pp_pkgs', JSON.stringify(installedPkgs));
     }
+    renderInstalledPkgs();
+    document.getElementById('pip-input').value = '';
+    showToast('success', '✅', 'تم التثبيت', pkg + ' جاهز للاستخدام');
+    appendOutput('✅ تم تثبيت: ' + pkg + '\n', 'success');
+  } catch(e) {
+    showToast('error', '❌', 'فشل التثبيت', e.message.split('\n')[0]);
+    appendOutput('❌ فشل تثبيت ' + pkg + ': ' + e.message + '\n', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'تثبيت';
+  }
+}
+
+async function silentInstall(pkg) {
+  try {
+    await pyodide.runPythonAsync(`import micropip\nawait micropip.install('${pkg}')`);
+  } catch(e) {}
+}
+
+function removePackage(pkg) {
+  installedPkgs = installedPkgs.filter(p => p !== pkg);
+  localStorage.setItem('pp_pkgs', JSON.stringify(installedPkgs));
+  renderInstalledPkgs();
+  showToast('success', '🗑', 'تمت الإزالة', pkg);
+}
+
+function renderInstalledPkgs() {
+  const container = document.getElementById('pkg-chips');
+  const empty = document.getElementById('pkg-empty');
+  if (installedPkgs.length === 0) {
+    empty.style.display = 'block';
+    const chips = container.querySelectorAll('.pkg-chip');
+    chips.forEach(c => c.remove());
+    return;
+  }
+  empty.style.display = 'none';
+  const existing = container.querySelectorAll('.pkg-chip');
+  existing.forEach(c => c.remove());
+  installedPkgs.forEach(pkg => {
+    const chip = document.createElement('div');
+    chip.className = 'pkg-chip';
+    chip.innerHTML = `${pkg} <span class="pkg-chip-remove" onclick="removePackage('${pkg}')">×</span>`;
+    container.appendChild(chip);
+  });
+}
+
+function appendOutput(text, kind) {
+  const area = document.getElementById('output-area');
+  const span = document.createElement('span');
+  span.className = 'out-line-' + kind;
+  span.textContent = text;
+  area.appendChild(span);
+  area.scrollTop = area.scrollHeight;
+}
+
+function clearOutput() {
+  document.getElementById('output-area').innerHTML = '';
+}
+
+function clearEditor() {
+  document.getElementById('code-editor').value = '';
+}
+
+function handleTab(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+    ta.selectionStart = ta.selectionEnd = start + 2;
+  }
+}
+
+function updateLineNums() {}
+
+/* ─── SNIPPETS ─── */
+const SNIPPETS = [
+  {
+    title: 'مرحبا بالعالم',
+    tag: 'Python',
+    desc: 'أول كود Python — طباعة رسالة وتاريخ اليوم',
+    code: `from datetime import datetime
+
+print("مرحباً من Pharaoh Pro! 🐍")
+print(f"التاريخ الآن: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")`
+  },
+  {
+    title: 'حساب إحصائي',
+    tag: 'math',
+    desc: 'حسابات رياضية بدون مكتبات خارجية',
+    code: `import math
+import statistics
+
+nums = [10, 25, 33, 47, 52, 61, 78, 90]
+
+print(f"القيم: {nums}")
+print(f"المجموع: {sum(nums)}")
+print(f"المتوسط: {statistics.mean(nums):.2f}")
+print(f"الوسيط: {statistics.median(nums)}")
+print(f"الانحراف المعياري: {statistics.stdev(nums):.2f}")
+print(f"الجذر التربيعي لـ 144: {math.sqrt(144)}")`
+  },
+  {
+    title: 'معالجة JSON',
+    tag: 'json',
+    desc: 'تحليل وبناء بيانات JSON',
+    code: `import json
+
+data = {
+    "game": "Coin Master",
+    "package": "com.moonactive.coinmaster",
+    "events": [
+        {"name": "village_5_complete", "status": 200},
+        {"name": "af_purchase", "status": 200}
+    ]
+}
+
+json_str = json.dumps(data, indent=2, ensure_ascii=False)
+print("JSON:")
+print(json_str)
+
+parsed = json.loads(json_str)
+print(f"\\nعدد الأحداث: {len(parsed['events'])}")
+print(f"اللعبة: {parsed['game']}")`
+  },
+  {
+    title: 'تحليل نصوص',
+    tag: 're',
+    desc: 'استخراج بيانات من نصوص باستخدام Regex',
+    code: `import re
+
+text = """
+GAID: 70ebe327-e224-4b1e-adb0-b09a27f78a0f
+AF-ID: 1779417828531-7129893952045055065
+Package: com.moonactive.coinmaster
+Status: 200 OK
+"""
+
+gaid = re.search(r'GAID: ([0-9a-f-]{36})', text)
+print(f"GAID: {gaid.group(1) if gaid else 'لم يُوجد'}")
+
+pkg = re.search(r'Package: ([\w.]+)', text)
+print(f"Package: {pkg.group(1) if pkg else 'لم يُوجد'}")
+
+status = re.search(r'Status: (\d+)', text)
+print(f"Status Code: {status.group(1) if status else 'لم يُوجد'}")`
+  },
+  {
+    title: 'توليد IDs عشوائية',
+    tag: 'utils',
+    desc: 'توليد GAID و AppsFlyer IDs جديدة عشوائية',
+    code: `import uuid
+import random
+import time
+
+def gen_gaid():
+    return str(uuid.uuid4())
+
+def gen_afid():
+    ts = int(time.time() * 1000)
+    rand = random.randint(1000000000000000000, 9999999999999999999)
+    return f"{ts}-{rand}"
+
+print("IDs جديدة:")
+for i in range(3):
+    gaid = gen_gaid()
+    afid = gen_afid()
+    print(f"\\n--- مجموعة {i+1} ---")
+    print(f"GAID: {gaid}")
+    print(f"AFID: {afid}")`
+  },
+  {
+    title: 'numpy - مصفوفات',
+    tag: 'numpy',
+    desc: 'عمليات على المصفوفات (يتطلب تثبيت numpy)',
+    code: `# قم بتثبيت numpy أولاً من حقل pip أعلاه
+import numpy as np
+
+arr = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+print(f"المصفوفة: {arr}")
+print(f"المتوسط: {np.mean(arr)}")
+print(f"الانحراف المعياري: {np.std(arr):.4f}")
+
+matrix = np.reshape(arr, (2, 5))
+print(f"\\nمصفوفة 2x5:")
+print(matrix)`
+  },
+  {
+    title: 'pandas - تحليل بيانات',
+    tag: 'pandas',
+    desc: 'تحليل بيانات مع pandas (يتطلب تثبيت pandas)',
+    code: `# قم بتثبيت pandas أولاً من حقل pip أعلاه
+import pandas as pd
+
+data = {
+    'Game': ['Coin Master', 'Gardenscapes', 'Match Factory', 'Toon Blast'],
+    'Events_Sent': [45, 32, 67, 28],
+    'Success_Rate': [0.95, 0.88, 0.97, 0.91],
+    'Category': ['other', 'other', 'puzzle', 'other']
+}
+
+df = pd.DataFrame(data)
+print("البيانات:")
+print(df.to_string(index=False))
+
+print(f"\\nمتوسط الأحداث المرسلة: {df['Events_Sent'].mean():.1f}")
+print(f"أعلى معدل نجاح: {df['Success_Rate'].max() * 100:.1f}%")
+print(f"\\nتوزيع الفئات:")
+print(df['Category'].value_counts())`
+  },
+  {
+    title: 'AppsFlyer Event Builder',
+    tag: 'AF',
+    desc: 'بناء وتحضير بيانات الأحداث بصيغة JSON جاهزة للإرسال',
+    code: `import json
+from datetime import datetime, timezone
+
+def build_event(package, dev_key, afid, gaid, event_name, revenue=None):
+    body = {
+        "appsflyer_id": afid,
+        "advertising_id": gaid,
+        "eventName": event_name,
+        "eventTime": datetime.now(timezone.utc).isoformat(),
+        "eventValue": json.dumps({"af_revenue": str(revenue), "af_currency": "USD"}) if revenue else "{}"
+    }
+    return {
+        "url": f"https://api2.appsflyer.com/inappevent/{package}",
+        "headers": {
+            "Content-Type": "application/json",
+            "authentication": dev_key
+        },
+        "body": body
+    }
+
+req = build_event(
+    package="com.moonactive.coinmaster",
+    dev_key="H3KjoCRVTiVgA5mWSAHtCe",
+    afid="1779417828531-7129893952045055065",
+    gaid="70ebe327-e224-4b1e-adb0-b09a27f78a0f",
+    event_name="village_5_complete"
+)
+
+print("الطلب المُحضَّر:")
+print(json.dumps(req, indent=2, ensure_ascii=False))`
+  }
+];
+
+function renderSnippets() {
+  const list = document.getElementById('snippet-list');
+  list.innerHTML = SNIPPETS.map((s, i) => `
+    <div class="snippet-card" onclick="loadSnippet(${i})">
+      <div class="snippet-header">
+        <div class="snippet-title">${s.title}</div>
+        <span class="snippet-tag">${s.tag}</span>
+      </div>
+      <div class="snippet-desc">${s.desc}</div>
+      <div class="snippet-preview">${s.code.substring(0, 120).replace(/</g,'&lt;').replace(/>/g,'&gt;')}...</div>
+    </div>
+  `).join('');
+}
+
+function loadSnippet(i) {
+  document.getElementById('code-editor').value = SNIPPETS[i].code;
+  switchPage('python');
+  showToast('success', '📋', 'تم التحميل', SNIPPETS[i].title + ' — اضغط ▶ للتشغيل');
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
 }
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+EOF
